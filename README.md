@@ -8,7 +8,7 @@ This repository contains all of our contributions to the project for the Magna L
 
 ### **1. src/validator.py**
 
-Contains the **RomanianPlateValidator** class.
+Contains the **RomanianLicensePlateValidator** class.
 
 - Validates the format of Romanian license plates based on county codes, numeric part, and letter sequences.
 - Ensures extracted plate numbers follow the official format.
