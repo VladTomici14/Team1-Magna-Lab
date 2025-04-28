@@ -1,10 +1,10 @@
 # Team 1 - Magna Lab
 
-This repository contains all of our contributions to the project for the Magna Lab course. 
+This repository contains all of our contributions to the project for the Magna Lab course.
 
 ---
 
-## Classes Overview
+## Classes Overview 
 
 ### **1. src/validator.py**
 
