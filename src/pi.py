@@ -24,3 +24,7 @@ class PiCamera2Stream:
     def cleanup(self):
         cv2.destroyAllWindows()
         self.picam2.stop()
+
+if __name__ == "__main__":
+    stream = PiCamera2Stream(resolution=(800, 600))
+    stream.start_stream()
