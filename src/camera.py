@@ -1,5 +1,7 @@
 import cv2
 
+# TODO: think about adding a conf.local file for each platform
+
 # ----- only importing the picamera2 if we're running on a pi -----
 try:
     from picamera2 import Picamera2
