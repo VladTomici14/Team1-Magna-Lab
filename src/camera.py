@@ -45,7 +45,7 @@ class PiCamera2Stream:
         while True:
 
             if self.platform == "pi":
-                frame = self.camera.capture_array()
+                frame = self.picam2.capture_array()
             else:
                 ret, frame = self.camera.read()
 
@@ -74,7 +74,7 @@ class PiCamera2Stream:
 
 if __name__ == "__main__":
     # ----- initialising the camera stream class based on the target resolution and running platform -----
-    stream = PiCamera2Stream(resolution=(800, 600), platform="mac")
+    stream = PiCamera2Stream(resolution=(800, 600), platform="pi")
 
     # ----- starting the camera stream -----
     stream.start_stream()
