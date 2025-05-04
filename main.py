@@ -1,32 +1,27 @@
 
 from src.validator import *
 from src.recognizer import *
+from src.utils import *
+import os
 
 if __name__ == "__main__":
 
     # Example usage:
     recognizer = NumberPlateRecognizer()
-    # plate_img, plate_number = recognizer.recognizePlateNumber("images/car2.jpeg")
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car1.jpg")[1])
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car2.jpeg")[1])
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car3.png")[1])
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car4.jpeg")[1])
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car5.jpg")[1])
-    print("Detected Plate:", recognizer.recognizePlateNumber("images/car6.jpeg")[1])
 
-    while True:
+    images_path = "images/"
 
-        cv2.imshow("image1", recognizer.recognizePlateNumber("images/car1.jpg")[0])
-        # cv2.imshow("image2", recognizer.recognizePlateNumber("images/car2.jpeg")[0])
-        cv2.imshow("image3", recognizer.recognizePlateNumber("images/car3.png")[0])
-        # cv2.imshow("image4", recognizer.recognizePlateNumber("images/car4.jpeg")[0])
-        cv2.imshow("image5", recognizer.recognizePlateNumber("images/car5.jpg")[0])
-        cv2.imshow("image6", recognizer.recognizePlateNumber("images/car6.jpeg")[0])
+    target_paths = []
 
+    for file in os.listdir(images_path):
+        if validImageFile(file):
+            target_path = os.path.join(images_path, file)
+            target_paths.append(target_path)
 
+            extracted_plate = recognizer.recognizePlateNumber(target_path)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            print(f"{target_path}: {extracted_plate[1]}")
+            recognizer.plotAllSteps(target_path, save_plot=True)
 
     # ----- testing some scenarios -----
     # validator = RomanianLicensePlateValidator()
