@@ -44,23 +44,6 @@ class NumberPlateRecognizer:
         # ----- edge detection -----
         edged = cv2.Canny(blurred, 30, 200)
 
-        cnts = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = imutils.grab_contours(cnts)
-        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
-        screenCnt = None
-
-        # ----- looping over contours -----
-        for c in cnts:
-            # approximate the contour
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.018 * peri, True)
-            # if the approximated contour has four points,
-            # then we can assume that we have found our
-            # screen
-            if len(approx) == 4:
-                screenCnt = approx
-            break
-
         return edged
 
     def findPlateContour(self, edged):
@@ -83,10 +66,9 @@ class NumberPlateRecognizer:
             # then we can assume that we have found our
             # screen
             if len(approx) == 4:
-                screenCnt = approx
-                break
+                return approx
 
-        return screen_cnt
+        return None
 
     def extractPlateRegion(self, image, plate_contour):
         """
@@ -110,6 +92,7 @@ class NumberPlateRecognizer:
         return plate_region
 
     def cleanPlateForOCR(self, plate_roi):
+        # TODO: think about using this function to clean the plate region
         """
         This function cleans the extracted plate region for better OCR results.
             :param plate_roi:
@@ -127,6 +110,7 @@ class NumberPlateRecognizer:
             gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY, 11, 2
         )
+
         return thresh
 
     def plotAllSteps(self, image_path, show_plot=False, save_plot=False):
@@ -205,7 +189,7 @@ class NumberPlateRecognizer:
 
         plate_region = self.extractPlateRegion(image, plate_contour)
         plate_region_processed = self.cleanPlateForOCR(plate_region)
-        text = pytesseract.image_to_string(plate_region_processed, config='--psm 8')
+        text = pytesseract.image_to_string(plate_region, config='--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
 
         return plate_region, text.strip()
 
