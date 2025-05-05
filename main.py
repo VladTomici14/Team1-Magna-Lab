@@ -12,6 +12,8 @@ if __name__ == "__main__":
     images_path = "images/"
 
     target_paths = []
+    
+    //x=2
 
     for file in os.listdir(images_path):
         if validImageFile(file):
