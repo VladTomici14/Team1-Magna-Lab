@@ -169,13 +169,14 @@ class NumberPlateRecognizer:
         if save_plot:
             plt.savefig(f"results/pipeline_steps_{os.path.splitext(os.path.basename(image_path))[0]}.png")
 
-    def recognizePlateNumber(self, image_path):
+    def recognizePlateNumber(self, image_path, image=None):
         """
         This function recognizes the number plate from the input image.
             :param image_path: input image path
         :return: the extracted plate region and the text from the plate
         """
-        image = cv2.imread(image_path)
+        if image is None:
+            image = cv2.imread(image_path)
 
         # ----- checking if the input image is valid -----
         if image is None:
