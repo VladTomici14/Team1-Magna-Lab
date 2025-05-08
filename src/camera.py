@@ -14,6 +14,8 @@ class PiCamera2Stream:
         self.platform = platform
         self.resolution = resolution
 
+        self.numberPlateRecognizer = NumberPlateRecognizer()
+
         if self.platform == "pi":
             # ----- initialising the picamera2 for the raspberry pi -----
             if not Picamera2:
@@ -48,6 +50,12 @@ class PiCamera2Stream:
 
             if self.platform == "pi":
                 frame = self.picam2.capture_array()
+
+                plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber(frame)
+
+                if extracted_text is not None:
+                    print(extracted_text)
+
             else:
                 ret, frame = self.camera.read()
 
