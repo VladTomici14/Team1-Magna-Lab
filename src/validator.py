@@ -93,12 +93,12 @@ class RomanianLicensePlateValidator:
 
         # ----- checking if there is any lowercase letters -----
         if not self.isUpperCase(text_plate):
-            print("[ERROR] The plate contains lowercase letters.")
+            # print("[ERROR] The plate contains lowercase letters.")
             return False
 
             # ----- checking if there are special characters -----
         if not self.doesNotContainSpecialCharacter(text_plate):
-            print("[ERROR] The plate contains special characters.")
+            # print("[ERROR] The plate contains special characters.")
             return False
 
         plateEntry = {"region": "", "number": "", "string": ""}
@@ -107,10 +107,11 @@ class RomanianLicensePlateValidator:
         length = len(text_plate)
 
         # ----- extracting the county from the string -----
-        if text_plate[1].isdigit():
+        if length > 0:
+            if text_plate[1].isdigit():
 
-            plateEntry['region'] = text_plate[0]
-            i = 1
+                plateEntry['region'] = text_plate[0]
+                i = 1
 
         # case MAI and ALA license plates
         elif length and text_plate[0:3].isalpha():
@@ -122,7 +123,7 @@ class RomanianLicensePlateValidator:
             i = 2
        
         else:
-            print("[ERROR] Invalid county format.")
+            # print("[ERROR] Invalid county format.")
             return False
 
         # ----- Checking if the plate is regular or special and its validity -----
@@ -146,13 +147,13 @@ class RomanianLicensePlateValidator:
                 return True
 
             else:
-                print("[ERROR] Number part is too short or too long")
+                # print("[ERROR] Number part is too short or too long")
                 return False
             
             # ----- extracting the plate string from the string -----
             remaining = text_plate[i:]
             if len(remaining) != 3 or not remaining.isalpha():
-                print("[ERROR] The last part must be exactly 3 letters.")
+                # print("[ERROR] The last part must be exactly 3 letters.")
                 return False
 
             plateEntry["string"] = remaining
@@ -161,7 +162,7 @@ class RomanianLicensePlateValidator:
                 # return plateEntry
                 return True
             else: 
-                print("[ERROR] License plate 3 letter string format")
+                # print("[ERROR] License plate 3 letter string format")
                 return False
         
         # Case Special Organization Plate
@@ -174,7 +175,7 @@ class RomanianLicensePlateValidator:
                 return True
 
             else:
-                print("[ERROR] Numbers in military plate incorrect")
+                # print("[ERROR] Numbers in military plate incorrect")
                 return False
 
         # Case Diplomatic Plate
@@ -186,12 +187,12 @@ class RomanianLicensePlateValidator:
                 # return plateEntry
                 return True
             else:
-                print("[ERROR] Numbers in diplomatic plate incorrect")
+                # print("[ERROR] Numbers in diplomatic plate incorrect")
                 return False
 
         # Incorrect Reading
         else:   
-            print("[ERROR] Invalid county, organization or diplomatic prefix at the beginning of the license plate.")
+            # print("[ERROR] Invalid county, organization or diplomatic prefix at the beginning of the license plate.")
             return False
 
 
