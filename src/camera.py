@@ -18,7 +18,7 @@ class PiCamera2Stream:
         self.resolution = resolution
 
         self.numberPlateRecognizer = NumberPlateRecognizer()
-        self.validator = Validator()
+        self.validator = RomanianLicensePlateValidator()
 
         if self.platform == "pi":
             # ----- initialising the picamera2 for the raspberry pi -----
