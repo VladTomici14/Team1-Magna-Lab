@@ -1,5 +1,8 @@
 import cv2
 
+from recognizer import *
+from validator import *
+
 # TODO: think about adding a conf.local file for each platform
 
 # ----- only importing the picamera2 if we're running on a pi -----
@@ -15,6 +18,7 @@ class PiCamera2Stream:
         self.resolution = resolution
 
         self.numberPlateRecognizer = NumberPlateRecognizer()
+        self.validator = Validator()
 
         if self.platform == "pi":
             # ----- initialising the picamera2 for the raspberry pi -----
@@ -51,9 +55,9 @@ class PiCamera2Stream:
             if self.platform == "pi":
                 frame = self.picam2.capture_array()
 
-                plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber(frame)
+                plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber("../images/car1.jpg", frame)
 
-                if extracted_text is not None:
+                if extracted_text is not None and validator.verifyPlateFormat(extracted_text):
                     print(extracted_text)
 
             else:

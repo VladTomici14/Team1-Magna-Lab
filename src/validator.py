@@ -93,11 +93,13 @@ class RomanianLicensePlateValidator:
 
         # ----- checking if there is any lowercase letters -----
         if not self.isUpperCase(text_plate):
-            return "[ERROR] The plate contains lowercase letters."
+            print("[ERROR] The plate contains lowercase letters.")
+            return False
 
             # ----- checking if there are special characters -----
         if not self.doesNotContainSpecialCharacter(text_plate):
-            return "[ERROR] The plate contains special characters."
+            print("[ERROR] The plate contains special characters.")
+            return False
 
         plateEntry = {"region": "", "number": "", "string": ""}
 
@@ -120,7 +122,8 @@ class RomanianLicensePlateValidator:
             i = 2
        
         else:
-            return "[ERROR] Invalid county format."
+            print("[ERROR] Invalid county format.")
+            return False
 
         # ----- Checking if the plate is regular or special and its validity -----
 
@@ -139,22 +142,27 @@ class RomanianLicensePlateValidator:
             # Case temporary plate
             elif len(number) >= 3 and len(number)<=6 and number[0]=="0" and number[len(number)-1]!="0":
                 plateEntry['number'] = number
-                return plateEntry
+                # return plateEntry
+                return True
 
             else:
-                return "[ERROR] Number part is too short or too long"
+                print("[ERROR] Number part is too short or too long")
+                return False
             
             # ----- extracting the plate string from the string -----
             remaining = text_plate[i:]
             if len(remaining) != 3 or not remaining.isalpha():
-                return "[ERROR] The last part must be exactly 3 letters."
+                print("[ERROR] The last part must be exactly 3 letters.")
+                return Flase
 
             plateEntry["string"] = remaining
             
             if self.isValid3LetterString(plateEntry["string"]):
-                return plateEntry
+                # return plateEntry
+                return True
             else: 
-                return "[ERROR] License plate 3 letter string format"
+                print("[ERROR] License plate 3 letter string format")
+                return False
         
         # Case Special Organization Plate
         elif self.isValidSpecialPlate(plateEntry['region']):
@@ -162,10 +170,12 @@ class RomanianLicensePlateValidator:
 
             if 3 <= len(digitArray) <= 7 and digitArray.isdigit():
                 plateEntry["number"] = digitArray
-                return plateEntry
+                # return plateEntry
+                return True
 
             else:
-                return "[ERROR] Numbers in military plate incorrect"
+                print("[ERROR] Numbers in military plate incorrect")
+                return False
 
         # Case Diplomatic Plate
         elif self.isValidDiplomaticPlate(plateEntry['region']):
@@ -173,13 +183,16 @@ class RomanianLicensePlateValidator:
             if len(digitArray) == 6 and digitArray.isdigit() and int(digitArray[0:3])>=101 and int(digitArray[3:6])>=101:
                      
                 plateEntry["number"] = digitArray
-                return plateEntry
+                # return plateEntry
+                return True
             else:
-                return "[ERROR] Numbers in diplomatic plate incorrect"
+                print("[ERROR] Numbers in diplomatic plate incorrect")
+                return False
 
         # Incorrect Reading
         else:   
-            return "[ERROR] Invalid county, organization or diplomatic prefix at the beginning of the license plate."
+            print("[ERROR] Invalid county, organization or diplomatic prefix at the beginning of the license plate.")
+            return False
 
 
 def main():
