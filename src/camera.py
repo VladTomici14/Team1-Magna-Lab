@@ -57,7 +57,7 @@ class PiCamera2Stream:
 
                 plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber("../images/car1.jpg", frame)
 
-                if extracted_text is not None and validator.verifyPlateFormat(extracted_text):
+                if extracted_text is not None and self.validator.verifyPlateFormat(extracted_text):
                     print(extracted_text)
 
             else:
