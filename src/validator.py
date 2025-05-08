@@ -153,7 +153,7 @@ class RomanianLicensePlateValidator:
             remaining = text_plate[i:]
             if len(remaining) != 3 or not remaining.isalpha():
                 print("[ERROR] The last part must be exactly 3 letters.")
-                return Flase
+                return False
 
             plateEntry["string"] = remaining
             
