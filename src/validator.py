@@ -107,7 +107,8 @@ class RomanianLicensePlateValidator:
         length = len(text_plate)
 
         # ----- extracting the county from the string -----
-        if length > 0:
+        if length > 1:
+
             if text_plate[1].isdigit():
 
                 plateEntry['region'] = text_plate[0]
