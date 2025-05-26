@@ -1,13 +1,13 @@
 
-
 class RomanianLicensePlateValidator:
     def __init__(self):
         
-        self.county_prefixes = [
-            "AB", "AR", "AG", "BC", "BH", "BN", "BT", "BV", "BR", "B", "BZ", "CS", "CL", "CJ", "CT", "CV", "DB",
-            "DJ", "GL", "GR", "GJ", "HR", "HD", "IL", "IS", "IF", "MM", "MH", "MS", "NT", "OT", "PH", "SM", "SJ",
-            "SB", "SV", "TR", "TM", "TL", "VS", "VL", "VN"
-        ]
+        self.county_prefixes =["AB", "AR", "AG", "BC", "BH", "BN", "BT", "BV", "BR","B",
+            "BZ","CS", "CL", "CJ", "CT", "CV","DB","DJ", "GL", "GR", "GJ", 
+            "HR", "HD", "IL", "IS", "IF", "MM", 
+            "MH", "MS", "NT", "OT", "PH", "SM", "SJ",
+            "SB", "SV", "TR", "TM", "TL", "VS", "VL", "VN"]
+            
         self.special_prefixes = {"A", "FA", "ALA", "MAI"}
         self.diplomatic_prefixes= {"CD", "TC", "CO"}
         
@@ -70,8 +70,13 @@ class RomanianLicensePlateValidator:
         :return: boolean corresponding to the validity of the prefix string
         """
         return prefix in self.special_prefixes
-    
-    
+        
+        
+        
+        
+        
+        
+        
     def isValidDiplomaticPlate(self, prefix):
         """
         This function checks if the prefix is for special organization].
@@ -151,8 +156,11 @@ class RomanianLicensePlateValidator:
         if length >= 3 and length<=7 and special_plate_numbers.isdigit() and letters=="":
             return True
         else: 
-            return False             
-    
+            return False      
+            
+            
+            
+            
     def CheckRegularPlate(self,county,number,letters):
         '''
         This verifies if the regular plates follow the template of temporary or permanent plates from bucharest and other counties
@@ -162,11 +170,19 @@ class RomanianLicensePlateValidator:
         elif(county=="B" and len(number) >= 2 and len(number)<=3 and len(letters)==3):#Bucharest Plates
             if(self.isValid3LetterString(letters)==True):
                 return True
-        elif(county!="B"and len(number) ==2  and len(letters)==3 ):#Other county permanent plates
+        elif(county!="B"and len(county)==2 and len(number) ==2  and len(letters)==3 ):#Other county permanent plates
             if(self.isValid3LetterString(letters)==True):
                 return True
             
         else: return False    
+        
+        
+        
+        
+        
+        
+        
+        
                 
 #----------MAIN VERIFICATION FUNCTION FOR ROMANIAN PLATES-------
 
@@ -222,23 +238,18 @@ class RomanianLicensePlateValidator:
             return False
         
         
-        
 
-            
-          
-
-'''
 def main():
-    validator = RomanianLicensePlateValidator()
+        validator = RomanianLicensePlateValidator()
 
-    #print(validator.verifyPlateFormat("B112125"))
-    # Standard plate
-    #print(validator.verifyPlateFormat("MAI1B234"))      # Special plate
-    #print(validator.verifyPlateFormat("CD123156"))    # Correct Diplomatic plate 
-    #print(validator.verifyPlateFormat("CD123156"))    # Inorrect Diplomatic plate 
-    #print(validator.verifyPlateFormat("CD12A156"))    # Inorrect Diplomatic plate 
-    print(validator.verifyPlateFormat("CJ0567"))      # Temporary plate
-    
+        print(validator.verifyPlateFormat("T44WIL"))
+        # Standard plate
+        #print(validator.verifyPlateFormat("MAI1B234"))      # Special plate
+        #print(validator.verifyPlateFormat("CD123156"))    # Correct Diplomatic plate 
+        #print(validator.verifyPlateFormat("CD123156"))    # Inorrect Diplomatic plate 
+        #print(validator.verifyPlateFormat("CD12A156"))    # Inorrect Diplomatic plate 
+        #print(validator.verifyPlateFormat("CJ0567"))      # Temporary plate
+        
 
     
 
@@ -247,6 +258,9 @@ if __name__ == "__main__":
     main()
     
         
+
     
+
+
+
     
-'''
