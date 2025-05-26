@@ -1,4 +1,5 @@
 
+
 class RomanianLicensePlateValidator:
     def __init__(self):
         
@@ -7,9 +8,9 @@ class RomanianLicensePlateValidator:
             "DJ", "GL", "GR", "GJ", "HR", "HD", "IL", "IS", "IF", "MM", "MH", "MS", "NT", "OT", "PH", "SM", "SJ",
             "SB", "SV", "TR", "TM", "TL", "VS", "VL", "VN"
         ]
-        self.special_prefixes = ["A", "FA", "ALA", "MAI"]
-        self.diplomatic_prefixes= ["CD", "TC", "CO"]
-
+        self.special_prefixes = {"A", "FA", "ALA", "MAI"}
+        self.diplomatic_prefixes= {"CD", "TC", "CO"}
+        
     def removeSpacesFromString(self, input_string):
         """
         This function removes all spaces from the input string.
@@ -17,6 +18,7 @@ class RomanianLicensePlateValidator:
         :return: the input string without spaces
         """
         return input_string.replace(' ', '')
+
 
     def isUpperCase(self, input_string):
         """
@@ -26,6 +28,7 @@ class RomanianLicensePlateValidator:
         """
         return input_string.isupper()
 
+
     def doesNotContainSpecialCharacter(self, input_string):
         """
          This function checks if the input string contains any special characters.
@@ -34,6 +37,7 @@ class RomanianLicensePlateValidator:
         """
         return input_string.isalnum()
 
+        
     def isValid3LetterString(self, string_in_plate):
         """
         This function checks if the last 3 letter string in the plate is correct
@@ -47,19 +51,18 @@ class RomanianLicensePlateValidator:
         """
         
         if string_in_plate[0]=='I' or string_in_plate[0]=='O':
-            print('3 letter string cannot begin with "O" or "I"')
+           
             return False
            
         elif "Q" in string_in_plate:
-            print('3 letter string cannot contain letter "Q"')
             return False
             
         elif string_in_plate=="III" or  string_in_plate=="OOO":
-            print('3 cannot equal string "III or "OOO"')
             return False
         else:
             return True 
-
+        
+            
     def isValidSpecialPlate(self, prefix):
         """
         This function checks if the prefix is for diplomatic plates.
@@ -67,7 +70,8 @@ class RomanianLicensePlateValidator:
         :return: boolean corresponding to the validity of the prefix string
         """
         return prefix in self.special_prefixes
-
+    
+    
     def isValidDiplomaticPlate(self, prefix):
         """
         This function checks if the prefix is for special organization].
@@ -76,138 +80,173 @@ class RomanianLicensePlateValidator:
         """
         return prefix in self.diplomatic_prefixes
 
+
     def isValidCounty(self, prefix):
+        
         """
         This function checks if the county string is valid.
             :param county_string:
         :return: boolean corresponding to the validity of the county string
         """
+        
         return prefix in self.county_prefixes
 
-    # -----------------------------------------------------------------
-    # ---------- MAIN VERIFICATION FUNCTION FOR ROMANIAN PLATES -------
-    # -----------------------------------------------------------------
+
+    def GetFirstCharacters(self, plate, plate_index):
+        result = ""
+
+        for character in plate:
+            if character.isdigit():
+                break
+            result += character
+            plate_index += 1
+
+        return result, plate_index
+        
+        
+    def GetDigits(self, plate, plate_index):
+        result = ""
+
+        for index in range(plate_index, len(plate)):
+            if not plate[index].isdigit():
+                break
+            result += plate[index]
+            plate_index += 1
+
+        return result, plate_index
+
+
+    def getLastDigits(self,plate,plate_index):
+        result=""
+        
+        for index in range(plate_index, len(plate)):
+            if plate[index].isdigit():
+                break
+                
+            result += plate[index]
+            plate_index += 1
+        
+        return result, plate_index
+    
+    
+    
+    
+    
+    def CheckDiplomaticPlate(self,diplomatic_numbers,letters):
+        '''
+        This verifies if the diplomatic plate numbers follow the rules and there are no letters after the digits
+        '''
+        length=len(diplomatic_numbers)
+        if length == 6 and diplomatic_numbers.isdigit() and int(diplomatic_numbers[0:3])>=101 and int(diplomatic_numbers[3:6])>=101 and letters=="":
+            return True
+        else:
+            return False
+    
+    def CheckSpecialPlate(self,special_plate_numbers, letters):
+        '''
+        This verifies if the diplomatic plate numbers follow the rules and there are no letters after the digits
+        '''
+        
+        length=len(special_plate_numbers)
+        if length >= 3 and length<=7 and special_plate_numbers.isdigit() and letters=="":
+            return True
+        else: 
+            return False             
+    
+    def CheckRegularPlate(self,county,number,letters):
+        '''
+        This verifies if the regular plates follow the template of temporary or permanent plates from bucharest and other counties
+        '''
+        if len(number) >= 4 and len(number)<=6 and number[0]=="0" and number[len(number)-1]!="0" and letters=="" :#Temporary plates
+            return True
+        elif(county=="B" and len(number) >= 2 and len(number)<=3 and len(letters)==3):#Bucharest Plates
+            if(self.isValid3LetterString(letters)==True):
+                return True
+        elif(county!="B"and len(number) ==2  and len(letters)==3 ):#Other county permanent plates
+            if(self.isValid3LetterString(letters)==True):
+                return True
+            
+        else: return False    
+                
+#----------MAIN VERIFICATION FUNCTION FOR ROMANIAN PLATES-------
+
+
     def verifyPlateFormat(self, text_plate):
+        
+        
+        
+        
         # ----- removing all spaces from the input string -----
         text_plate = self.removeSpacesFromString(text_plate)
 
         # ----- checking if there is any lowercase letters -----
         if not self.isUpperCase(text_plate):
-            # print("[ERROR] The plate contains lowercase letters.")
             return False
 
             # ----- checking if there are special characters -----
         if not self.doesNotContainSpecialCharacter(text_plate):
-            # print("[ERROR] The plate contains special characters.")
-            return False
+           return False
 
-        plateEntry = {"region": "", "number": "", "string": ""}
 
-        i = 0
-        length = len(text_plate)
-
-        # ----- extracting the county from the string -----
-        if length > 1:
-
-            if text_plate[1].isdigit():
-
-                plateEntry['region'] = text_plate[0]
-                i = 1
-
-        # case MAI and ALA license plates
-        elif length and text_plate[0:3].isalpha():
-            plateEntry['region'] = text_plate[0:3]
-            i = 3
-                
-        elif length and text_plate[0:2].isalpha():
-            plateEntry['region'] = text_plate[0:2]
-            i = 2
-       
-        else:
-            # print("[ERROR] Invalid county format.")
-            return False
-
-        # ----- Checking if the plate is regular or special and its validity -----
-
-        # Case Normal Plate
-        if self.isValidCounty(plateEntry['region']):
-            # ----- extracting the number from the string -----
-            number = ""
-            while i < length and text_plate[i].isdigit() and len(number) < 6:
-                number += text_plate[i]
-                i += 1
-
-            # Case normal plate(including bucharest)
-            if len(number)==2 or (len(number)==3 and plateEntry['region']=="B"):
-                plateEntry['number'] = number
-
-            # Case temporary plate
-            elif len(number) >= 3 and len(number)<=6 and number[0]=="0" and number[len(number)-1]!="0":
-                plateEntry['number'] = number
-                # return plateEntry
-                return True
-
-            else:
-                # print("[ERROR] Number part is too short or too long")
-                return False
-            
-            # ----- extracting the plate string from the string -----
-            remaining = text_plate[i:]
-            if len(remaining) != 3 or not remaining.isalpha():
-                # print("[ERROR] The last part must be exactly 3 letters.")
-                return False
-
-            plateEntry["string"] = remaining
-            
-            if self.isValid3LetterString(plateEntry["string"]):
-                # return plateEntry
-                return True
-            else: 
-                # print("[ERROR] License plate 3 letter string format")
-                return False
+     
+        '''
+        FROM NOW ON, elements in variable platEntry will contain(if number is detected correctly) the 2/3 blocks of strings from a plate
+        If number is not detected correctly, error is catched in the next steps
         
-        # Case Special Organization Plate
-        elif self.isValidSpecialPlate(plateEntry['region']):
-            digitArray = text_plate[len(plateEntry['region']):]
-
-            if 3 <= len(digitArray) <= 7 and digitArray.isdigit():
-                plateEntry["number"] = digitArray
-                # return plateEntry
-                return True
-
+        '''
+        
+        
+        
+        plate_index = 0
+        prefix=""
+        numbers=""
+        lastLetters=""
+        
+        prefix, plate_index = self.GetFirstCharacters(text_plate, plate_index)
+        numbers, plate_index = self.GetDigits(text_plate, plate_index)
+        lastLetters,plate_index=self.getLastDigits(text_plate,plate_index)
+        
+        if self.isValidCounty(prefix) or self.isValidSpecialPlate(prefix) or self.isValidDiplomaticPlate:
+            
+            
+            
+            if self.isValidSpecialPlate(prefix):
+                return self.CheckSpecialPlate(numbers,lastLetters)
+            elif self.isValidDiplomaticPlate(prefix):
+                return self.CheckDiplomaticPlate(numbers,lastLetters)
             else:
-                # print("[ERROR] Numbers in military plate incorrect")
-                return False
+                return self.CheckRegularPlate(prefix, numbers, lastLetters)
+                
 
-        # Case Diplomatic Plate
-        elif self.isValidDiplomaticPlate(plateEntry['region']):
-            digitArray = text_plate[len(plateEntry['region']):]
-            if len(digitArray) == 6 and digitArray.isdigit() and int(digitArray[0:3])>=101 and int(digitArray[3:6])>=101:
-                     
-                plateEntry["number"] = digitArray
-                # return plateEntry
-                return True
-            else:
-                # print("[ERROR] Numbers in diplomatic plate incorrect")
-                return False
-
-        # Incorrect Reading
-        else:   
-            # print("[ERROR] Invalid county, organization or diplomatic prefix at the beginning of the license plate.")
+        else:
             return False
+        
+        
+        
 
+            
+          
 
+'''
 def main():
     validator = RomanianLicensePlateValidator()
 
-    # print(validator.verifyPlateFormat("B12OBC"))      # Standard plate
-    # print(validator.verifyPlateFormat("MAI153"))      # Special plate
-    # print(validator.verifyPlateFormat("CD123156"))    # Correct Diplomatic plate
-    # print(validator.verifyPlateFormat("CD023156"))    # Inorrect Diplomatic plate
-    print(validator.verifyPlateFormat("CD12A156"))    # Inorrect Diplomatic plate
-    # print(validator.verifyPlateFormat("CJ0567"))      # Temporary plate
+    #print(validator.verifyPlateFormat("B112125"))
+    # Standard plate
+    #print(validator.verifyPlateFormat("MAI1B234"))      # Special plate
+    #print(validator.verifyPlateFormat("CD123156"))    # Correct Diplomatic plate 
+    #print(validator.verifyPlateFormat("CD123156"))    # Inorrect Diplomatic plate 
+    #print(validator.verifyPlateFormat("CD12A156"))    # Inorrect Diplomatic plate 
+    print(validator.verifyPlateFormat("CJ0567"))      # Temporary plate
+    
+
+    
+
 
 if __name__ == "__main__":
     main()
     
+        
     
+    
+'''
