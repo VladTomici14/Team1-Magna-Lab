@@ -1,5 +1,6 @@
 # Team 1 - Magna Lab
 
+test
 This repository contains all of our contributions to the project for the Magna Lab course.
 
 ---
