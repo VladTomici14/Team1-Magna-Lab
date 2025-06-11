@@ -1,2 +1,4 @@
 git-token.txt
 src/__pycache__
+.idea
+.DS_Store
