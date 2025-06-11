@@ -40,9 +40,12 @@ class NumberPlateRecognizer:
 
         # ----- noise reduction -----
         blurred = cv2.bilateralFilter(gray, 11, 17, 17)
+        #blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        #cv2.imshow("Bilateral Filter", blurred)
 
         # ----- edge detection -----
-        edged = cv2.Canny(blurred, 30, 200)
+        edged = cv2.Canny(blurred, 30, 200)#30 200
+        #cv2.imshow("Edge Detection", edged)
 
         return edged
 
@@ -61,7 +64,7 @@ class NumberPlateRecognizer:
         for c in cnts:
             # approximate the contour
             peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.018 * peri, True)
+            approx = cv2.approxPolyDP(c, 0.018 * peri, True)#0.018
             # if the approximated contour has four points,
             # then we can assume that we have found our
             # screen
@@ -128,7 +131,7 @@ class NumberPlateRecognizer:
 
         # ----- adding all the image processing steps in an array -----
         gray = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.bilateralFilter(gray, 11, 17, 17)
+        blurred = cv2.bilateralFilter(gray, 9, 75, 75)#11 17 17
         edged = cv2.Canny(blurred, 30, 200)
 
         images = [original, gray, blurred, edged]
@@ -172,6 +175,7 @@ class NumberPlateRecognizer:
     def recognizePlateNumber(self, image_path, image=None):
         """
         This function recognizes the number plate from the input image.
+             Input image can pe image from path or image from camera feed-sent from other code   
             :param image_path: input image path
         :return: the extracted plate region and the text from the plate
         """
@@ -189,6 +193,7 @@ class NumberPlateRecognizer:
             return None, "No plate contour found"
 
         plate_region = self.extractPlateRegion(image, plate_contour)
+        #cv2.imshow("ROI", plate_region)
         plate_region_processed = self.cleanPlateForOCR(plate_region)
         text = pytesseract.image_to_string(plate_region, config='--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
 

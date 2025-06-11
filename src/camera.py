@@ -17,6 +17,7 @@ class PiCamera2Stream:
         self.platform = platform
         self.resolution = resolution
 
+        #constructors for image processsing and plate validation classes 
         self.numberPlateRecognizer = NumberPlateRecognizer()
         self.validator = RomanianLicensePlateValidator()
 
@@ -53,13 +54,17 @@ class PiCamera2Stream:
         while True:
 
             if self.platform == "pi":
-                frame = self.picam2.capture_array()
+                frame = self.picam2.capture_array() #captures a single image frame from the active preview stream.
 
                 plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber("../images/car1.jpg", frame)
 
                 if extracted_text is not None:
                     print(extracted_text)
-                    # if  self.validator.verifyPlateFormat(extracted_text):
+                    if  self.validator.verifyPlateFormat(extracted_text):
+                        print("VALID plate")
+                    else:
+                        print("INVALID PLATE")
+                        
 
             else:
                 ret, frame = self.camera.read()
