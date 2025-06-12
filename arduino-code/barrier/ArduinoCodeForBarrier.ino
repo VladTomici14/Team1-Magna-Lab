@@ -1,15 +1,10 @@
 #include <Servo.h>
-#include<LiquidCrystal_I2C.h>
-
-
+#include <LiquidCrystal_I2C.h>
 
 #define SERVO_PIN 6
 #define CLOSED_ANGLE 0
 #define OPEN_ANGLE 65
 #define STEP_DELAY_MS 15
-
-
-
 
 #define PUSHBUTTON_PIN 5
 #define GREEN_LED_PIN 2
@@ -47,7 +42,7 @@ bool BarrierIsNowOpened = false;
 
 int carBefore = 0;
 int carAfter = 0;
-int carAfter_LastValue =0;
+int carAfter_LastValue =0;  
 
 int index1=0;
 int index2=0;
