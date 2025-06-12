@@ -1,11 +1,11 @@
 #include <Servo.h>
-#include<LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C.h>
 
 
 
 #define SERVO_PIN 6
 #define CLOSED_ANGLE 0
-#define OPEN_ANGLE 65
+#define OPEN_ANGLE 75
 #define STEP_DELAY_MS 15
 
 
@@ -16,11 +16,11 @@
 #define RED_LED_PIN 3
 #define BUTTON_DEBOUNCE_DELAY 100
 #define ULTRASONIC_DELAY 100
-#define BUFFER_SIZE      5
+#define BUFFER_SIZE 5
 
 
 Servo barrierServo;
-LiquidCrystal_I2C lcd(0x27,16,2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 int mappedAngle;
 
@@ -41,26 +41,36 @@ unsigned long then = 0;
 int Sensor1ReadingValid = 0;
 int Sensor2ReadingValid = 0;
 
-int ultrasonicReadingBuffer1[BUFFER_SIZE] = {0};
-int ultrasonicReadingBuffer2[BUFFER_SIZE] = {0};
+int ultrasonicReadingBuffer1[BUFFER_SIZE] = { 0 };
+int ultrasonicReadingBuffer2[BUFFER_SIZE] = { 0 };
 bool BarrierIsNowOpened = false;
 
+int MessageToSend=0;
 int carBefore = 0;
 int carAfter = 0;
-int carAfter_LastValue =0;
+int carAfter_LastValue = 0;
 
-int index1=0;
-int index2=0;
+int index1 = 0;
+int index2 = 0;
+
+
+
+
+int mesaj[3];
+
+
 
 
 bool barrierIsOpening = false;
 bool barrierIsClosing = false;
 
 unsigned long lastMoveTime = 0;
-int barrierAngle = CLOSED_ANGLE; 
+int barrierAngle = CLOSED_ANGLE;
 
 String lastLine1 = "";
 String lastLine2 = "";
+
+
 void handleButton() {
   bool reading = digitalRead(PUSHBUTTON_PIN) == HIGH;  // Active LOW button
 
@@ -104,11 +114,11 @@ void licensePlateIsNotOk() {
 
 void openBarrier() {
   BarrierIsNowOpened = true;
+
   barrierIsOpening = true;
   barrierIsClosing = false;
   BarrierLed();  // Optional visual indicator
   OK = false;
- 
 }
 
 
@@ -131,8 +141,8 @@ void updateBarrier() {
     if (barrierIsOpening) {
       if (barrierAngle < OPEN_ANGLE) {
         barrierAngle++;
-        int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
-        barrierServo.write(mappedAngle);
+        // int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
+        barrierServo.write(barrierAngle);
       } else {
         barrierIsOpening = false;  // Finished
       }
@@ -141,8 +151,8 @@ void updateBarrier() {
     if (barrierIsClosing) {
       if (barrierAngle > CLOSED_ANGLE) {
         barrierAngle--;
-        int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
-        barrierServo.write(mappedAngle);
+        //int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
+        barrierServo.write(barrierAngle);
       } else {
         barrierIsClosing = false;  // Finished
       }
@@ -150,28 +160,25 @@ void updateBarrier() {
   }
 }
 
-void  updatePresentCarState(int readingValidation, int* buffer,int*index,int *carPresent) {
-  
-  
+void updatePresentCarState(int readingValidation, int* buffer, int* index, int* carPresent) {
+
+
   buffer[*index] = readingValidation;
   (*index)++;
 
-  if (*index >= BUFFER_SIZE) 
-  {
+  if (*index >= BUFFER_SIZE) {
     int sum = 0;
     for (int i = 0; i < BUFFER_SIZE; i++) {
       sum += buffer[i];
     }
 
-    if(sum >= BUFFER_SIZE-1)
-       *carPresent=1;
-      else
-       *carPresent=0;
-        // 9/10 consistent readings = car present
+    if (sum >= BUFFER_SIZE - 1)
+      *carPresent = 1;
+    else
+      *carPresent = 0;
+    // 9/10 consistent readings = car present
     *index = 0;
   }
-
-  
 }
 
 
@@ -187,27 +194,24 @@ int ReadUltrasonic(int echoPin, int trigPin) {
 
   // Read echo duration
   long duration = pulseIn(echoPin, HIGH, 30000);  // 30ms timeout
-  float distance = (duration * 0.0343) / 2.0;     // Convert to cm
+  float distance = (duration * 0.0343) / 2.0;     // Convert to cm viteza sunetului 340 m/s 0.0343 cm/s
 
+
+  //8* 40Khz signal
   // Return presence detection (1 if car present, 0 otherwise)
   return (distance > 0 && distance < 20) ? 1 : 0;
 }
 
-void BarrierLed()
-{
-if(BarrierIsNowOpened ==false)
-  {
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(RED_LED_PIN, HIGH);
+void BarrierLed() {
+  if (BarrierIsNowOpened == false) {
+    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(RED_LED_PIN, HIGH);
   }
 
-if(BarrierIsNowOpened ==true)
-  {
-   digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, HIGH);
+  if (BarrierIsNowOpened == true) {
+    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
   }
-
-
 }
 
 
@@ -219,32 +223,38 @@ int getCenter(const String& text) {
   return max(0, (16 - len) / 2);
 }
 
+
+int DecodeMessage(int* message) {
+  int sum = 0;
+
+  if (message[0] == 1)
+    sum = sum + 1;
+  if (message[1] == 1)
+    sum = sum + 2;
+  if (message[2] == 1)
+    sum = sum + 4;
+
+  return sum;
+}
 void updateLCDStatus(bool carBefore, bool carAfter, bool barrierOpened, bool okRequested, bool BarrierIsOpening, bool BarrierIsClosing) {
   String line1, line2;
 
- if (BarrierIsOpening)
-  {
+  if (BarrierIsOpening) {
     line1 = "Access granted";
     line2 = "Barrier is opening";
-  } else if (carBefore && !barrierOpened && !okRequested)
-  {
+  } else if (carBefore && !barrierOpened && !okRequested) {
     line1 = "Car detected";
     line2 = "Press Button";
-  } else if (barrierOpened && carAfter) 
-  {
+  } else if (barrierOpened && carAfter) {
     line1 = "Car in zone";
     line2 = "Barrier is opened";
-  } else if (BarrierIsClosing) 
-  {
+  } else if (BarrierIsClosing) {
     line1 = "Car passed";
     line2 = "Closing barrier";
-  } else if (!carBefore && !carAfter && !barrierOpened) 
-  {
+  } else if (!carBefore && !carAfter && !barrierOpened) {
     line1 = "HELLO";
     line2 = "";
-  }
-  else if(carBefore && barrierOpened)
-  {
+  } else if (carBefore && barrierOpened) {
     line1 = "MOVE FORWARD->->->";
     line2 = "";
   }
@@ -283,10 +293,10 @@ void setup() {
 
 
   lcd.begin();
-lcd.backlight();
-lcd.clear();
-lcd.setCursor(0, 0);
-lcd.print("System Ready");
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
   delay(1000);
 }
 
@@ -301,40 +311,70 @@ void loop() {
 
 
     Sensor1ReadingValid = ReadUltrasonic(echoPin1, trigPin1);
-   updatePresentCarState(Sensor1ReadingValid, ultrasonicReadingBuffer1,&index1,&carBefore);
+    updatePresentCarState(Sensor1ReadingValid, ultrasonicReadingBuffer1, &index1, &carBefore);
 
 
     Sensor2ReadingValid = ReadUltrasonic(echoPin2, trigPin2);
-    updatePresentCarState(Sensor2ReadingValid, ultrasonicReadingBuffer2,&index2,&carAfter);
+    updatePresentCarState(Sensor2ReadingValid, ultrasonicReadingBuffer2, &index2, &carAfter);
 
-    
 
-      
+    mesaj[0] = carBefore;
+    mesaj[2] = carAfter;
+
+
+
 
     then = now;
   }
 
 
-
-
-
-  if (carBefore == 1&& BarrierIsNowOpened ==false) 
-  {
-
-    handleButton();
-    if (OK)
-      openBarrier();
+  mesaj[1] = (int)BarrierIsNowOpened;
    
+   MessageToSend=DecodeMessage(mesaj);
+  Serial.println(MessageToSend);
+
+
+
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');  // Read until newline
+    command.trim();                                 // Remove any leading/trailing whitespace
+
+    Serial.print("Arduino received: ");
+    Serial.println(command);  // Echo back the received command
+
+    if (command == "o") {
+      OK = !OK;
+    }
+
+    /*
+      else if (command == "Turn LED OFF") 
+      {
+        digitalWrite(LED_BUILTIN, LOW);
+        Serial.println("LED is now OFF");
+      }
+
+      */
   }
 
-    if(carAfter_LastValue==1 && carAfter==0&& BarrierIsNowOpened ==true)
-      closeBarrier();
-   
-      
 
-    
-    carAfter_LastValue=carAfter;
-    updateLCDStatus(carBefore, carAfter, BarrierIsNowOpened, OK,barrierIsOpening,barrierIsClosing);
-    updateBarrier();
-    BarrierLed();
+
+  if (carBefore == 1 && BarrierIsNowOpened == false) {
+
+    //handleButton();
+    if (OK) {
+      openBarrier();
+      //Serial.println(BarrierIsNowOpened);
+    }
+  }
+
+  if (carAfter_LastValue == 1 && carAfter == 0 && BarrierIsNowOpened == true)
+    closeBarrier();
+
+
+
+
+  carAfter_LastValue = carAfter;
+  updateLCDStatus(carBefore, carAfter, BarrierIsNowOpened, OK, barrierIsOpening, barrierIsClosing);
+  updateBarrier();
+  BarrierLed();
 }
