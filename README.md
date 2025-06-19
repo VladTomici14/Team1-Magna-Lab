@@ -29,7 +29,6 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 - 🚧 **3D-Printed Barrier System** – servo-controlled gates for car access
 - 🔁 **I2C Communication** – between Arduino and Raspberry Pi
 
----
 
 ### 💻 Software Components
 
@@ -39,7 +38,48 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 - **Custom I2C Protocol** – for Raspberry ↔ Arduino communication
 - **Scene Builder** – used to design JavaFX FXML interfaces
 ---
+
+## 🚀 Features
+
+- 📸 Automatic license plate detection
+- 🛑 Control of entry/exit barriers
+- 📍 Real-time vehicle detection via sensors
+- 📊 Database logging of events (plate, time, access point)
+- 🖥️ JavaFX UI to display active sessions, manual overrides
+- 📡 Communication between microcontrollers and UI layer
+
+
+---
+
+## 🔄 System Flow
+
+1. Vehicle approaches the gate.
+2. Sensor triggers image capture via PiCam.
+3. Raspberry Pi runs recognition (or forwards to external LPR module).
+4. If plate is valid → barrier opens automatically.
+5. Arduino detects car movement; updates Pi via I2C.
+6. Database logs event: plate, timestamp, gate direction.
+7. UI updates with session and logs in real-time.
+---
+
+
 ## DOCUMENTATION
+###**📁 Project Structure**
+Team1-Magna-Lab/
+├── .idea/                       # IntelliJ project settings
+├── database/                   # SQL file for creating and populating the database
+│   └── magnalab.sql
+├── out/                        # Build output (ignored in repo)
+├── src/                        # Source code
+│   ├── controller/             # JavaFX controllers for UI events
+│   ├── dao/                    # Data Access Objects (interact with DB)
+│   ├── model/                  # Domain models (User, Sample, etc.)
+│   ├── utils/                  # Utility classes (DB connection, helpers)
+│   ├── application/            # Main JavaFX launcher
+│   │   └── Main.java
+│   └── view/                   # FXML UI layout files
+├── resources/                  # Additional resources (can be used for images, config, etc.)
+├── README.md                   # Project documentation
 
 
 ### **[PlateInfo.md](PlateInfo.md)**
