@@ -18,11 +18,11 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 > - **UI for control and monitoring**
 ---
 ## 📌 Objectives
-🚗 Automate parking entry/exit using license plate recognition (LPR)
-🎯 Control barriers via microcontrollers and sensors
-📷 Capture and analyze vehicle plates using a Pi camera
-💾 Log all parking events in a MySQL database
-🔧 Provide modular, maintainable code for each componen
+🚗 Automate parking entry/exit using license plate recognition (LPR)  
+🎯 Control barriers via microcontrollers and sensors  
+📷 Capture and analyze vehicle plates using a Pi camera  
+💾 Log all parking events in a MySQL database  
+🔧 Provide modular, maintainable code for each componen  
 
 ---
 ## COMPONENTS
