@@ -65,6 +65,7 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 
 ## DOCUMENTATION
 ###**📁 Project Structure**
+```
 Team1-Magna-Lab/
 ├── .idea/                       # IntelliJ project settings
 ├── database/                   # SQL file for creating and populating the database
@@ -80,7 +81,7 @@ Team1-Magna-Lab/
 │   └── view/                   # FXML UI layout files
 ├── resources/                  # Additional resources (can be used for images, config, etc.)
 ├── README.md                   # Project documentation
-
+```
 
 ### **[PlateInfo.md](PlateInfo.md)**
 Contains detailed documentation about Romanian license plate formats and validation rules:
