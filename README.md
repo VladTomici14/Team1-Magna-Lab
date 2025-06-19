@@ -205,6 +205,7 @@ The Arduino sends a signal back to the Pi.
 The gate is closed.
 The UI (if active) is updated to reflect the latest status.
 
+---
 ## 🧭 EXAMPLE FLOW
 🚗 Car arrives → triggers ultrasonic sensor  
 📸 PiCam captures image  
