@@ -107,7 +107,7 @@ Contains detailed documentation about Romanian license plate formats and validat
 - Documents the logic behind the validation process
 - Provides examples and edge cases for testing
 - Serves as a reference guide for understanding the plate validation implementation
-
+---
 ## CLASS OVERVIEW
 
 ### **1. [src/validator.py](src/validator.py)**
