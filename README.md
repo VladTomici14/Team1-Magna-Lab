@@ -1,8 +1,7 @@
-# Team 1 - Magna Lab
+🅿️ Team1-MagnaLab – Smart Parking System
 
 test
 This repository contains all of our contributions to the project for the Magna Lab course.
-
 ---
 ## 🚗 Overview
 
@@ -10,7 +9,7 @@ This repository contains all of our contributions to the project for the Magna L
 
 The system uses computer vision, sensors, and a 3D-printed physical gate setup to recognize license plates, control barrier gates, and log parking events in a central database. The project was built using Raspberry Pi, Arduino, and JavaFX as a multidisciplinary solution developed by Team 1 during Magna's Smart Parking System lab.
 
-## 🧠 Key Concept
+### 🧠 Key Concept
 
 > A fully functional parking control system that combines:
 > - **Computer vision** (license plate recognition)
@@ -19,15 +18,23 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 > - **Networked communication** (I2C and DB)
 > - **UI for control and monitoring**
 ---
+## 📌 Objectives
+🚗 Automate parking entry/exit using license plate recognition (LPR)
+🎯 Control barriers via microcontrollers and sensors
+📷 Capture and analyze vehicle plates using a Pi camera
+💾 Log all parking events in a MySQL database
+🔧 Provide modular, maintainable code for each componen
+
+---
 ## COMPONENTS
 ### 🔧 Hardware Components
 
-- 🧠 **Raspberry Pi 4** – central controller, runs the main Java application
-- 🅿️ **Camera Module (PiCam)** – used for license plate recognition (LPR)
-- 🔌 **Arduino Uno** – handles distance and IR sensors, communicates via I2C
-- 📡 **Ultrasonic + IR sensors** – detect car position and gate entry/exit
-- 🚧 **3D-Printed Barrier System** – servo-controlled gates for car access
-- 🔁 **I2C Communication** – between Arduino and Raspberry Pi
+- **Raspberry Pi 4** – central controller, runs the main Java application
+- **Camera Module (PiCam)** – used for license plate recognition (LPR)
+- **Arduino Uno** – handles distance and IR sensors, communicates via I2C
+- **Ultrasonic + IR sensors** – detect car position and gate entry/exit
+- **3D-Printed Barrier System** – servo-controlled gates for car access
+- **I2C Communication** – between Arduino and Raspberry Pi
 
 
 ### 💻 Software Components
@@ -38,7 +45,6 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 - **Custom I2C Protocol** – for Raspberry ↔ Arduino communication
 - **Scene Builder** – used to design JavaFX FXML interfaces
 ---
-
 ## 🚀 Features
 
 - 📸 Automatic license plate detection
@@ -47,7 +53,6 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 - 📊 Database logging of events (plate, time, access point)
 - 🖥️ JavaFX UI to display active sessions, manual overrides
 - 📡 Communication between microcontrollers and UI layer
-
 
 ---
 
@@ -64,23 +69,46 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 
 
 ## DOCUMENTATION
-###**📁 Project Structure**
+### **📁 Project Structure**
 ```
 Team1-Magna-Lab/
-├── .idea/                       # IntelliJ project settings
-├── database/                   # SQL file for creating and populating the database
-│   └── magnalab.sql
-├── out/                        # Build output (ignored in repo)
-├── src/                        # Source code
-│   ├── controller/             # JavaFX controllers for UI events
-│   ├── dao/                    # Data Access Objects (interact with DB)
-│   ├── model/                  # Domain models (User, Sample, etc.)
-│   ├── utils/                  # Utility classes (DB connection, helpers)
-│   ├── application/            # Main JavaFX launcher
-│   │   └── Main.java
-│   └── view/                   # FXML UI layout files
-├── resources/                  # Additional resources (can be used for images, config, etc.)
-├── README.md                   # Project documentation
+├── camera_feed.py
+├── main.py
+├── PlateInfo.md
+├── README.md
+├── arduino-code/
+│   ├── barrier/
+│   │   ├── ArduinoCodeForBarrier.ino
+│   │   └── lcd-i2c.ino
+│   └── serial/
+│       ├── a.out
+│       ├── testing-serial-usb.c
+│       └── testing-serial-usb.py
+├── database/
+│   ├── add-entry.c
+│   ├── create-table.c
+│   ├── database-setup.sql
+│   └── db.c
+├── images/
+│   ├── car1.jpg
+│   ├── car2.jpeg
+│   ├── car3.png
+│   ├── ...
+│   └── car11.png
+├── PiCamImages/
+│   ├── Camera stream_screenshot_29.05.2025.png
+│   ├── MAI_1.jpg
+│   ├── TRICKY_5.jpg
+│   └── ...
+├── results/
+│   ├── pipeline_steps_car1.png
+│   ├── pipeline_steps_car2.png
+│   └── ...
+└── src/
+    ├── camera.py
+    ├── recognizer.py
+    ├── utils.py
+    └── validator.py
 ```
 
 ### **[PlateInfo.md](PlateInfo.md)**
