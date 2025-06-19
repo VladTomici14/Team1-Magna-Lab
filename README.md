@@ -190,9 +190,9 @@ If invalid → log error and wait for the next trigger.
 
 2. Database Logging
 A new entry is created in the MySQL database with the following fields:  
-Timestamp (date and time)  
-Plate string (e.g., “B 456 YTR”)  
-Direction: entry or exit (based on gate position)
+**Timestamp:** (date and time)  
+**Plate string:** (e.g., “B 456 YTR”)  
+**Direction:** entry or exit (based on gate position)
 
 3. Barrier Control
 A serial signal is sent from the Raspberry Pi to the Arduino.
