@@ -1,6 +1,6 @@
 # 🅿️ Team1-MagnaLab – Smart Parking System
 
-This repository contains all of our contributions to the project for the Magna Lab course.
+> This repository contains all of our contributions to the project for the Magna Lab course.
 ---
 ## 🚗 Overview
 
