@@ -18,11 +18,11 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 > - **UI for control and monitoring**
 ---
 ## 📌 Objectives
-🚗 Automate parking entry/exit using license plate recognition (LPR)  
-🎯 Control barriers via microcontrollers and sensors  
-📷 Capture and analyze vehicle plates using a Pi camera  
-💾 Log all parking events in a MySQL database  
-🔧 Provide modular, maintainable code for each componen  
+- Automate parking entry/exit using license plate recognition (LPR)  
+- Control barriers via microcontrollers and sensors  
+- Capture and analyze vehicle plates using a Pi camera  
+- Log all parking events in a MySQL database  
+- Provide modular, maintainable code for each componen  
 
 ---
 ## COMPONENTS
@@ -44,16 +44,7 @@ The system uses computer vision, sensors, and a 3D-printed physical gate setup t
 - **Custom I2C Protocol** – for Raspberry ↔ Arduino communication
 - **Scene Builder** – used to design JavaFX FXML interfaces
 ---
-## 🚀 Features
 
-- 📸 Automatic license plate detection
-- 🛑 Control of entry/exit barriers
-- 📍 Real-time vehicle detection via sensors
-- 📊 Database logging of events (plate, time, access point)
-- 🖥️ JavaFX UI to display active sessions, manual overrides
-- 📡 Communication between microcontrollers and UI layer
-
----
 
 ## 🔄 System Flow
 
@@ -161,7 +152,7 @@ The central **orchestrator**.
 
 ---
 
-## GETTNG STARTED
+## 🚀 GETTING STARTED
 
 ### **1. Clone the Repository**
 
@@ -184,8 +175,49 @@ The camera module supports:
 - macOS (using OpenCV webcam interface)
 - Support for additional platforms can be implemented as needed
 
-## RESULTS
+### Results
 
 ![Pipeline Steps](results/pipeline_steps_car1.png)
 ![Pipeline Steps](results/pipeline_steps_car3.png)
 ![Pipeline Steps](results/pipeline_steps_car7.png)
+
+## 🧠 What Happens After Detection?
+
+1. Plate Validation
+The text output from the OCR step is passed through RomanianLicensePlateValidator.
+If the plate format is valid (e.g. “B 123 ABC” or “MAI 4567”), the system continues.
+If invalid → log error and wait for the next trigger.
+
+2. Database Logging
+A new entry is created in the MySQL database with the following fields:
+Timestamp (date and time)
+Plate string (e.g., “B 456 YTR”)
+Direction: entry or exit (based on gate position)
+
+3. Barrier Control
+A serial signal is sent from the Raspberry Pi to the Arduino.
+The Arduino reads the command (e.g., "OPEN"), checks for vehicle presence via sensor, and activates the servo motor.
+The gate opens for a limited time or until the car clears the sensor range.
+
+4. Post-Event Logging
+A second sensor confirms that the vehicle has passed.
+The Arduino sends a signal back to the Pi (via USB or I2C).
+The gate is closed.
+The UI (if active) is updated to reflect the latest status.
+
+5. User Feedback
+The Pi can also send feedback to:
+An LCD (e.g., “Access Granted”)
+A logging console
+A UI panel in the JavaFX app or Python script
+
+## 🧭 EXAMPLE FLOW
+🚗 Car arrives → triggers ultrasonic sensor
+📸 PiCam captures image
+🧠 Plate is detected and passed to OCR
+✅ Plate format is validated
+💾 Entry logged to database
+🔓 Arduino opens the gate
+📤 Event confirmed via sensors
+🔒 Gate closes
+🖥️ UI updates / console prints log
