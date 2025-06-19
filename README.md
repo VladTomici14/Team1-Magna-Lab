@@ -206,12 +206,12 @@ The gate is closed.
 The UI (if active) is updated to reflect the latest status.
 
 ## 🧭 EXAMPLE FLOW
-🚗 Car arrives → triggers ultrasonic sensor
-📸 PiCam captures image
-🧠 Plate is detected and passed to OCR
-✅ Plate format is validated
-💾 Entry logged to database
-🔓 Arduino opens the gate
-📤 Event confirmed via sensors
-🔒 Gate closes
-🖥️ UI updates / console prints log
+🚗 Car arrives → triggers ultrasonic sensor  
+📸 PiCam captures image  
+🧠 Plate is detected and passed to OCR  
+✅ Plate format is validated  
+💾 Entry logged to database  
+🔓 Arduino opens the gate  
+📤 Event confirmed via sensors  
+🔒 Gate closes  
+🖥️ UI updates / console prints log  
