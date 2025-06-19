@@ -4,8 +4,44 @@ test
 This repository contains all of our contributions to the project for the Magna Lab course.
 
 ---
+## 🚗 Overview
 
+**T1ML** is a smart parking system that integrates hardware and software components to automate the process of vehicle access control, monitoring, and data logging in a physical parking space.
+
+The system uses computer vision, sensors, and a 3D-printed physical gate setup to recognize license plates, control barrier gates, and log parking events in a central database. The project was built using Raspberry Pi, Arduino, and JavaFX as a multidisciplinary solution developed by Team 1 during Magna's Smart Parking System lab.
+
+## 🧠 Key Concept
+
+> A fully functional parking control system that combines:
+> - **Computer vision** (license plate recognition)
+> - **Hardware actuation** (barriers, servos)
+> - **Sensor detection** (presence, movement)
+> - **Networked communication** (I2C and DB)
+> - **UI for control and monitoring**
+---
+## COMPONENTS
+### 🔧 Hardware Components
+
+- 🧠 **Raspberry Pi 4** – central controller, runs the main Java application
+- 🅿️ **Camera Module (PiCam)** – used for license plate recognition (LPR)
+- 🔌 **Arduino Uno** – handles distance and IR sensors, communicates via I2C
+- 📡 **Ultrasonic + IR sensors** – detect car position and gate entry/exit
+- 🚧 **3D-Printed Barrier System** – servo-controlled gates for car access
+- 🔁 **I2C Communication** – between Arduino and Raspberry Pi
+
+---
+
+### 💻 Software Components
+
+- **Java 17 + JavaFX** – graphical interface for monitoring system state
+- **MySQL** – database for logging vehicle entries/exits and user data
+- **OpenCV / Python (optional)** – for license plate recognition
+- **Custom I2C Protocol** – for Raspberry ↔ Arduino communication
+- **Scene Builder** – used to design JavaFX FXML interfaces
+---
 ## DOCUMENTATION
+
+
 ### **[PlateInfo.md](PlateInfo.md)**
 Contains detailed documentation about Romanian license plate formats and validation rules:
 - Explains the structure and format specifications for different plate types
