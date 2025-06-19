@@ -108,7 +108,7 @@ Contains detailed documentation about Romanian license plate formats and validat
 - Provides examples and edge cases for testing
 - Serves as a reference guide for understanding the plate validation implementation
 
-## CLASSES OVERVIEW
+## CLASS OVERVIEW
 
 ### **1. [src/validator.py](src/validator.py)**
 Contains the **RomanianLicensePlateValidator** class.
@@ -189,9 +189,9 @@ If the plate format is valid (e.g. “B 123 ABC” or “MAI 4567”), the syste
 If invalid → log error and wait for the next trigger.
 
 2. Database Logging
-A new entry is created in the MySQL database with the following fields:
-Timestamp (date and time)
-Plate string (e.g., “B 456 YTR”)
+A new entry is created in the MySQL database with the following fields:  
+Timestamp (date and time)  
+Plate string (e.g., “B 456 YTR”)  
 Direction: entry or exit (based on gate position)
 
 3. Barrier Control
@@ -201,15 +201,9 @@ The gate opens for a limited time or until the car clears the sensor range.
 
 4. Post-Event Logging
 A second sensor confirms that the vehicle has passed.
-The Arduino sends a signal back to the Pi (via USB or I2C).
+The Arduino sends a signal back to the Pi.
 The gate is closed.
 The UI (if active) is updated to reflect the latest status.
-
-5. User Feedback
-The Pi can also send feedback to:
-An LCD (e.g., “Access Granted”)
-A logging console
-A UI panel in the JavaFX app or Python script
 
 ## 🧭 EXAMPLE FLOW
 🚗 Car arrives → triggers ultrasonic sensor
