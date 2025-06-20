@@ -206,6 +206,81 @@ The gate is closed.
 The UI (if active) is updated to reflect the latest status.
 
 ---
+## ELECTRONICS WIRING
+
+This section provides the wiring details for connecting the components to the Arduino board.
+
+### **Green LED**
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| GND           | GND         |
+| Pin           | D2          |
+
+### **Red LED**
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| GND           | GND         |
+| Pin           | D3          |
+
+### **Ultrasonic Sensor 1** (HC-SR04)
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Trig          | D11         |
+| Echo          | D12         |
+
+
+### **Ultrasonic Sensor 2** (HC-SR04)
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Trig          | D9          |
+| Echo          | D10         |
+
+### **Ultrasonic Sensor 3** (HC-SR04)
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Trig          | D11         |
+| Echo          | D12         |
+
+
+### **Ultrasonic Sensor 4** (HC-SR04)
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Trig          | D9          |
+| Echo          | D10         |
+
+### **Servo Motor 1**
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Signal        | D6          |
+
+### **Servo Motor 2**
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Signal        | D6          |
+
+### **LCD Display**
+| Component Pin | Arduino Pin |
+|---------------|-------------|
+| VCC           | 5V          |
+| GND           | GND         |
+| Signal        | D6          |
+
+> ⚠️ Ensure all components share a common GND with the Arduino to avoid inconsistent behavior.
+
+
+---
 ## 🧭 EXAMPLE FLOW
 🚗 Car arrives → triggers ultrasonic sensor  
 📸 PiCam captures image  
