@@ -1,7 +1,14 @@
 import cv2
+import os
+from dotenv import load_dotenv
 
-from recognizer import *
-from validator import *
+# Assuming recognizer.py and validator.py are in the same directory or accessible via PYTHONPATH
+# You might need to adjust these imports based on your project structure.
+from recognizer import NumberPlateRecognizer
+from validator import RomanianLicensePlateValidator
+
+# Import the ParkingDatabaseManager class from your database.py (or parking_db_app.py) file
+from parking_db_app import ParkingDatabaseManager
 
 # TODO: think about adding a conf.local file for each platform
 
@@ -17,9 +24,23 @@ class PiCamera2Stream:
         self.platform = platform
         self.resolution = resolution
 
-        #constructors for image processsing and plate validation classes 
+        # Constructors for image processing and plate validation classes
         self.numberPlateRecognizer = NumberPlateRecognizer()
         self.validator = RomanianLicensePlateValidator()
+
+        # Load environment variables for database connection
+        load_dotenv()
+        DB_HOST = os.getenv("DB_HOST")
+        DB_USER = os.getenv("DB_USER")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        DB_NAME = os.getenv("DB_NAME")
+
+        # Initialize the database manager
+        if not all([DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
+            print("Error: One or more database environment variables are not set. Please check your .env file.")
+            self.db_manager = None  # Set to None to indicate no database connection
+        else:
+            self.db_manager = ParkingDatabaseManager(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 
         if self.platform == "pi":
             # ----- initialising the picamera2 for the raspberry pi -----
@@ -52,28 +73,88 @@ class PiCamera2Stream:
         """
         print("Press 'q' to quit.")
         while True:
+            frame = None  # Initialize frame outside the if/else to ensure it's always defined for cv2.imshow
 
             if self.platform == "pi":
-                frame = self.picam2.capture_array() #captures a single image frame from the active preview stream.
+                frame = self.picam2.capture_array()  # captures a single image frame from the active preview stream.
 
-                plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber("../images/car1.jpg", frame)
+                # NOTE: The current setup uses a static image path ("../images/car1.jpg") for recognition
+                # You might want to pass the 'frame' directly to the recognizer if it processes raw image data.
+                # For demonstration, I'll assume your recognizer can handle 'frame' or that you're using
+                # the static image for testing the plate recognition part.
+                # If your recognizer needs a file path, you'd need to save the frame to a temporary file first.
 
-                if extracted_text is not None:
-                    print(extracted_text)
-                    if  self.validator.verifyPlateFormat(extracted_text):
-                        print("VALID plate")
+                # Assuming recognizer.recognizePlateNumber can take the captured 'frame' directly or an image path
+                # I'm keeping the original call for now. If it expects a file path, this will need adjustment.
+                # If your recognizer can take an OpenCV image (numpy array), you would change this to:
+                # plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber(frame)
+
+                # For this example, let's assume `recognizer` can process the `frame` directly.
+                # If it expects an image path, you'd need to save the frame temporarily.
+                # As `car1.jpg` is a fixed path, I'll add a placeholder to demonstrate the flow.
+                # You'll need to adapt `recognizer.py` or how you feed images to it.
+                # For a real-time system, you'd pass the `frame` (numpy array) directly.
+
+                # Temporarily using a placeholder for extracted_text for testing db integration
+                # In a real scenario, this would come from the actual recognition process.
+                # For now, let's simulate a recognized plate for testing DB integration:
+                # extracted_text = "B01ABC" # Example of a recognized plate for testing
+
+                # Original call, assuming it works with your setup or is for a different part of the flow
+                plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber("../images/car1.jpg",
+                                                                                               frame)
+
+                if extracted_text is not None and extracted_text != "":  # Ensure text is not empty
+                    extracted_text = extracted_text.strip().upper()  # Clean and standardize
+                    print(f"Recognized Text: {extracted_text}")
+
+                    if self.validator.verifyPlateFormat(extracted_text):
+                        print(f"Plate '{extracted_text}' is in VALID format.")
+
+                        # --- Database Verification and Auto-Add ---
+                        if self.db_manager:
+                            vehicle_info = self.db_manager.verify_from_database(extracted_text)
+                            if vehicle_info:
+                                print(
+                                    f"*** Plate '{extracted_text}' FOUND in database! Authorization: {vehicle_info['is_authorized']} ***")
+                            else:
+                                # If plate not found in DB, check if it starts with "TM" and add it
+                                print(f"--- Plate '{extracted_text}' NOT FOUND in database. ---")
+                                if extracted_text.startswith("TM"):
+                                    print(
+                                        f"Plate '{extracted_text}' starts with 'TM'. Attempting to add to database...")
+                                    if self.db_manager.append_to_database(extracted_text, is_authorized=True):
+                                        print(
+                                            f"*** Plate '{extracted_text}' successfully ADDED to database with authorization TRUE. ***")
+                                    else:
+                                        print(f"!!! Failed to add plate '{extracted_text}' to database. !!!")
+                                else:
+                                    print(
+                                        f"Plate '{extracted_text}' does not start with 'TM'. Not automatically adding to database.")
+                        else:
+                            print("Database manager not initialized. Cannot verify or add plate to DB.")
                     else:
-                        print("INVALID PLATE")
-                        
+                        print(f"Plate '{extracted_text}' is in INVALID format.")
+                elif extracted_text == "":
+                    print("No text extracted from plate region.")
+                else:
+                    print("Plate recognition failed or no text extracted.")
 
-            else:
+
+            elif self.platform == "mac":
                 ret, frame = self.camera.read()
 
                 if not ret:
                     print("[ERROR] Failed to capture image from webcam.")
                     break
 
-            cv2.imshow("Camera stream", frame)
+                # On macOS, you would also apply your recognition and validation logic here
+                # plate_region, extracted_text = self.numberPlateRecognizer.recognizePlateNumber(frame)
+                # ... and then perform database verification as above ...
+
+            # Only show frame if it's available
+            if frame is not None:
+                cv2.imshow("Camera stream", frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -87,14 +168,24 @@ class PiCamera2Stream:
         cv2.destroyAllWindows()
 
         if self.platform == "pi":
-            self.camera.stop()
-        else:
+            # self.camera.stop() # This line should be self.picam2.stop() for consistency
+            self.picam2.stop()  # Corrected from self.camera.stop()
+        elif self.platform == "mac":  # Added elif for clarity
             self.camera.release()
 
 
 if __name__ == "__main__":
     # ----- initialising the camera stream class based on the target resolution and running platform -----
+    # Make sure your recognizer.py and validator.py are correctly set up and accessible.
+    # If running on a Pi, ensure picamera2 is installed and functional.
+    # If using 'mac', ensure your webcam is accessible (usually index 0).
+
+    # For testing on a Pi:
     stream = PiCamera2Stream(resolution=(800, 600), platform="pi")
+
+    # For testing on a Mac (if you have a webcam and cv2 is installed):
+    # stream = PiCamera2Stream(resolution=(800, 600), platform="mac")
 
     # ----- starting the camera stream -----
     stream.start_stream()
+
