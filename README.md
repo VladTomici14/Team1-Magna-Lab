@@ -210,6 +210,10 @@ The UI (if active) is updated to reflect the latest status.
 
 This section provides the wiring details for connecting the components to the Arduino board.
 
+![circuit diagram](documentation/circuit.png)
+
+Also, check-out the schematic view of the circuit [here](documentation/Team%201%20-%20Schematic%20View.pdf)!
+
 ### **Green LED**
 | Component Pin | Arduino Pin |
 |---------------|-------------|
@@ -275,7 +279,8 @@ This section provides the wiring details for connecting the components to the Ar
 |---------------|-------------|
 | VCC           | 5V          |
 | GND           | GND         |
-| Signal        | D6          |
+| SDA           | A4          |
+| SCL           | A5          |
 
 > ⚠️ Ensure all components share a common GND with the Arduino to avoid inconsistent behavior.
 
