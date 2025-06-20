@@ -1,14 +1,14 @@
 import cv2
 import os
 from dotenv import load_dotenv
+import serial  # Import the serial library
 
 # Assuming recognizer.py and validator.py are in the same directory or accessible via PYTHONPATH
-# You might need to adjust these imports based on your project structure.
 from recognizer import NumberPlateRecognizer
 from validator import RomanianLicensePlateValidator
 
 # Import the ParkingDatabaseManager class from your database.py (or parking_db_app.py) file
-from database import ParkingDatabaseManager
+from parking_db_app import ParkingDatabaseManager
 
 # TODO: think about adding a conf.local file for each platform
 
@@ -23,6 +23,7 @@ class PiCamera2Stream:
     def __init__(self, resolution=(640, 480), platform="pi"):
         self.platform = platform
         self.resolution = resolution
+        self.serial_port = None  # Initialize serial_port attribute
 
         # Constructors for image processing and plate validation classes
         self.numberPlateRecognizer = NumberPlateRecognizer()
@@ -54,6 +55,18 @@ class PiCamera2Stream:
             self.picam2.start()
             print(f"[Picamera2] Camera started with resolution {resolution}")
 
+            # ----- Initializing serial communication for Raspberry Pi -----
+            try:
+                # Configure the serial port. Adjust baudrate as needed for your device.
+                self.serial_port = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+                print(f"[Serial] Connected to /dev/ttyUSB0 at 9600 baud.")
+            except serial.SerialException as e:
+                print(f"[ERROR] Could not open serial port /dev/ttyUSB0: {e}")
+                self.serial_port = None  # Ensure it's None if connection fails
+            except FileNotFoundError:
+                print(f"[ERROR] Serial port /dev/ttyUSB0 not found. Check if the device is connected.")
+                self.serial_port = None
+
         elif self.platform == "mac":
             # ----- initialising the webcam for the macOS system -----
             self.camera = cv2.VideoCapture(0)
@@ -66,6 +79,19 @@ class PiCamera2Stream:
         else:
             # ----- returning an error if the platform is not supported -----
             raise ValueError("[ERROR] Unsupported platform. Use 'pi' or 'mac'.")
+
+    def _send_serial_message(self, message):
+        """
+        Sends a message over the initialized serial port.
+        """
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                self.serial_port.write(message.encode('utf-8'))  # Encode message to bytes
+                print(f"[Serial] Sent message: '{message}'")
+            except serial.SerialException as e:
+                print(f"[ERROR] Error sending serial message: {e}")
+        else:
+            print("[Serial] Serial port not open or not initialized. Message not sent.")
 
     def start_stream(self):
         """
@@ -117,6 +143,8 @@ class PiCamera2Stream:
                             if vehicle_info:
                                 print(
                                     f"*** Plate '{extracted_text}' FOUND in database! Authorization: {vehicle_info['is_authorized']} ***")
+                                # Send serial message if found and authorized (you can add a condition here if needed)
+                                self._send_serial_message("open_entry")
                             else:
                                 # If plate not found in DB, check if it starts with "TM" and add it
                                 print(f"--- Plate '{extracted_text}' NOT FOUND in database. ---")
@@ -126,6 +154,8 @@ class PiCamera2Stream:
                                     if self.db_manager.append_to_database(extracted_text, is_authorized=True):
                                         print(
                                             f"*** Plate '{extracted_text}' successfully ADDED to database with authorization TRUE. ***")
+                                        # Send serial message after successful auto-add
+                                        self._send_serial_message("open_entry")
                                     else:
                                         print(f"!!! Failed to add plate '{extracted_text}' to database. !!!")
                                 else:
@@ -168,8 +198,10 @@ class PiCamera2Stream:
         cv2.destroyAllWindows()
 
         if self.platform == "pi":
-            # self.camera.stop() # This line should be self.picam2.stop() for consistency
-            self.picam2.stop()  # Corrected from self.camera.stop()
+            self.picam2.stop()
+            if self.serial_port and self.serial_port.is_open:
+                self.serial_port.close()
+                print("[Serial] Serial port closed.")
         elif self.platform == "mac":  # Added elif for clarity
             self.camera.release()
 
@@ -188,4 +220,3 @@ if __name__ == "__main__":
 
     # ----- starting the camera stream -----
     stream.start_stream()
-
