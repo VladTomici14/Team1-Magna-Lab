@@ -1,380 +1,350 @@
 #include <Servo.h>
 #include <LiquidCrystal_I2C.h>
 
+// ----- Pin Definitions -----
+#define ENTRY_TRIG 11
+#define ENTRY_ECHO 12
+#define ENTRY_SAFE_TRIG 3
+#define ENTRY_SAFE_ECHO 4
 
+#define EXIT_TRIG 9
+#define EXIT_ECHO 10
+#define EXIT_SAFE_TRIG 7
+#define EXIT_SAFE_ECHO 8
 
-#define SERVO_PIN 6
-#define CLOSED_ANGLE 0
+#define SERVO_ENTRY_PIN 5
+#define SERVO_EXIT_PIN 6
+
 #define OPEN_ANGLE 75
-#define STEP_DELAY_MS 15
-
-
-
-
-#define PUSHBUTTON_PIN 5
-#define GREEN_LED_PIN 2
-#define RED_LED_PIN 3
-#define BUTTON_DEBOUNCE_DELAY 100
-#define ULTRASONIC_DELAY 100
+#define CLOSED_ANGLE 0
+#define STEP_DELAY 15
 #define BUFFER_SIZE 5
+#define DETECTION_DISTANCE 15  // cm - distance to panels
+#define SENSOR_UPDATE_INTERVAL 100  // ms
+#define SIGNAL_SEND_INTERVAL 1000  // ms for car detection signals
 
-
-Servo barrierServo;
+// ----- LCD -----
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-int mappedAngle;
+// ----- Barrier Struct -----
+struct Barrier {
+  int trigPin;
+  int echoPin;
+  int safeTrigPin;
+  int safeEchoPin;
+  Servo* servo;
 
-bool buttonState = false;
-bool lastButtonReading = false;
-unsigned long lastDebounceTime = 0;
-bool OK;
+  int bufferBefore[BUFFER_SIZE] = {0};
+  int bufferAfter[BUFFER_SIZE] = {0};
+  int indexBefore = 0;
+  int indexAfter = 0;
 
-const int trigPin1 = 11;
-const int echoPin1 = 12;
-const int trigPin2 = 9;
-const int echoPin2 = 10;
+  bool carBefore = false;
+  bool carAfter = false;
+  bool lastCarBefore = false;
+  bool lastCarAfter = false;
 
-float duration, distance;
-unsigned long now = 0;
-unsigned long then = 0;
+  bool barrierOpened = false;
+  bool opening = false;
+  bool closing = false;
+  int angle = CLOSED_ANGLE;
+  unsigned long lastMoveTime = 0;
 
-int Sensor1ReadingValid = 0;
-int Sensor2ReadingValid = 0;
+  // Entry barrier needs permission, exit barrier opens automatically
+  bool waitingForPermission = false;
+  bool hasPermission = false;
 
-int ultrasonicReadingBuffer1[BUFFER_SIZE] = { 0 };
-int ultrasonicReadingBuffer2[BUFFER_SIZE] = { 0 };
-bool BarrierIsNowOpened = false;
+  Barrier(int trig, int echo, int safeTrig, int safeEcho, Servo* s)
+    : trigPin(trig), echoPin(echo), safeTrigPin(safeTrig), safeEchoPin(safeEcho), servo(s) {}
+};
 
-int MessageToSend=0;
-int carBefore = 0;
-int carAfter = 0;
-int carAfter_LastValue = 0;
+// ----- Servo Instances -----
+Servo entryServo, exitServo;
 
-int index1 = 0;
-int index2 = 0;
+// ----- Barrier Instances -----
+Barrier entry(ENTRY_TRIG, ENTRY_ECHO, ENTRY_SAFE_TRIG, ENTRY_SAFE_ECHO, &entryServo);
+Barrier exitBarrier(EXIT_TRIG, EXIT_ECHO, EXIT_SAFE_TRIG, EXIT_SAFE_ECHO, &exitServo);
 
+// ----- Timing Variables -----
+unsigned long lastSensorUpdate = 0;
+unsigned long lastEntrySignal = 0;
 
+// ----- Utility Functions -----
+long readDistanceCM(int trig, int echo) {
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
 
+  long duration = pulseIn(echo, HIGH, 30000);  // 30ms timeout
+  if (duration == 0) return 999;  // Return large value for timeout
 
-int mesaj[3];
+  return (duration * 0.0343) / 2.0;
+}
 
+bool isCarDetected(int trig, int echo) {
+  long distance = readDistanceCM(trig, echo);
+  // Car is present when distance is less than 15cm (panel distance)
+  // Valid reading should be > 0 and < 15cm
+  return (distance > 0 && distance < DETECTION_DISTANCE);
+}
 
+void updateCarPresence(Barrier &b) {
+  // Update "before" sensor (car approaching)
+  int carDetectedBefore = isCarDetected(b.trigPin, b.echoPin) ? 1 : 0;
+  b.bufferBefore[b.indexBefore] = carDetectedBefore;
+  b.indexBefore = (b.indexBefore + 1) % BUFFER_SIZE;
 
+  // Update "after" sensor (car passed through)
+  int carDetectedAfter = isCarDetected(b.safeTrigPin, b.safeEchoPin) ? 1 : 0;
+  b.bufferAfter[b.indexAfter] = carDetectedAfter;
+  b.indexAfter = (b.indexAfter + 1) % BUFFER_SIZE;
 
-bool barrierIsOpening = false;
-bool barrierIsClosing = false;
-
-unsigned long lastMoveTime = 0;
-int barrierAngle = CLOSED_ANGLE;
-
-String lastLine1 = "";
-String lastLine2 = "";
-
-
-void handleButton() {
-  bool reading = digitalRead(PUSHBUTTON_PIN) == HIGH;  // Active LOW button
-
-  if (reading != lastButtonReading) {
-    lastDebounceTime = millis();  // reset debounce timer
+  // Calculate presence based on buffer majority
+  int sumBefore = 0, sumAfter = 0;
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    sumBefore += b.bufferBefore[i];
+    sumAfter += b.bufferAfter[i];
   }
 
-  if ((millis() - lastDebounceTime) > BUTTON_DEBOUNCE_DELAY) {
-    if (reading != buttonState) {
+  b.lastCarBefore = b.carBefore;
+  b.lastCarAfter = b.carAfter;
 
-      buttonState = reading;
-
-      if (buttonState) {
-        OK = !OK;
-      }
-    }
-  }
-
-
-  lastButtonReading = reading;
+  b.carBefore = (sumBefore >= BUFFER_SIZE - 1);  // 4 out of 5 readings
+  b.carAfter = (sumAfter >= BUFFER_SIZE - 1);
 }
 
-
-void licensePlateIsOk() {
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, HIGH);
-  openBarrier();
-}
-
-
-
-
-void licensePlateIsNotOk() {
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(RED_LED_PIN, HIGH);
-  //closeBarrier();  // Optional: close if not OK
-}
-
-
-
-
-void openBarrier() {
-  BarrierIsNowOpened = true;
-
-  barrierIsOpening = true;
-  barrierIsClosing = false;
-  BarrierLed();  // Optional visual indicator
-  OK = false;
-}
-
-
-
-
-
-void closeBarrier() {
-  BarrierIsNowOpened = false;
-  barrierIsClosing = true;
-  barrierIsOpening = false;
-  BarrierLed();  // Optional visual indicator
-}
-
-void updateBarrier() {
+void moveBarrier(Barrier &b) {
   unsigned long now = millis();
 
-  if ((barrierIsOpening || barrierIsClosing) && now - lastMoveTime >= STEP_DELAY_MS) {
-    lastMoveTime = now;
+  if ((b.opening || b.closing) && now - b.lastMoveTime >= STEP_DELAY) {
+    b.lastMoveTime = now;
 
-    if (barrierIsOpening) {
-      if (barrierAngle < OPEN_ANGLE) {
-        barrierAngle++;
-        // int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
-        barrierServo.write(barrierAngle);
-      } else {
-        barrierIsOpening = false;  // Finished
-      }
+    if (b.opening && b.angle < OPEN_ANGLE) {
+      b.angle+=5;
+      b.servo->write(b.angle);
+    } else if (b.opening && b.angle >= OPEN_ANGLE) {
+      b.opening = false;
+      b.barrierOpened = true;
+      Serial.println("BARRIER_OPENED");
     }
 
-    if (barrierIsClosing) {
-      if (barrierAngle > CLOSED_ANGLE) {
-        barrierAngle--;
-        //int mappedAngle = map(barrierAngle, 0, 180, 0, 255);
-        barrierServo.write(barrierAngle);
-      } else {
-        barrierIsClosing = false;  // Finished
-      }
+    if (b.closing && b.angle > CLOSED_ANGLE) {
+      b.angle-=5;
+      b.servo->write(b.angle);
+    } else if (b.closing && b.angle <= CLOSED_ANGLE) {
+      b.closing = false;
+      b.barrierOpened = false;
+      Serial.println("BARRIER_CLOSED");
     }
   }
 }
 
-void updatePresentCarState(int readingValidation, int* buffer, int* index, int* carPresent) {
+void handleEntryBarrier() {
+  updateCarPresence(entry);
 
-
-  buffer[*index] = readingValidation;
-  (*index)++;
-
-  if (*index >= BUFFER_SIZE) {
-    int sum = 0;
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-      sum += buffer[i];
-    }
-
-    if (sum >= BUFFER_SIZE - 1)
-      *carPresent = 1;
-    else
-      *carPresent = 0;
-    // 9/10 consistent readings = car present
-    *index = 0;
-  }
-}
-
-
-
-
-int ReadUltrasonic(int echoPin, int trigPin) {
-  // Trigger ultrasonic pulse
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  // Read echo duration
-  long duration = pulseIn(echoPin, HIGH, 30000);  // 30ms timeout
-  float distance = (duration * 0.0343) / 2.0;     // Convert to cm viteza sunetului 340 m/s 0.0343 cm/s
-
-
-  //8* 40Khz signal
-  // Return presence detection (1 if car present, 0 otherwise)
-  return (distance > 0 && distance < 20) ? 1 : 0;
-}
-
-void BarrierLed() {
-  if (BarrierIsNowOpened == false) {
-    digitalWrite(GREEN_LED_PIN, LOW);
-    digitalWrite(RED_LED_PIN, HIGH);
+  // Car just arrived at entry barrier
+  if (entry.carBefore && !entry.lastCarBefore && !entry.waitingForPermission && !entry.barrierOpened) {
+    entry.waitingForPermission = true;
+    Serial.println("CAR_DETECTED_ENTRY");
+    updateLCD("Car Detected", "Checking Plate...");
   }
 
-  if (BarrierIsNowOpened == true) {
-    digitalWrite(RED_LED_PIN, LOW);
-    digitalWrite(GREEN_LED_PIN, HIGH);
-  }
-}
-
-
-
-
-
-int getCenter(const String& text) {
-  int len = text.length();
-  return max(0, (16 - len) / 2);
-}
-
-
-int DecodeMessage(int* message) {
-  int sum = 0;
-
-  if (message[0] == 1)
-    sum = sum + 1;
-  if (message[1] == 1)
-    sum = sum + 2;
-  if (message[2] == 1)
-    sum = sum + 4;
-
-  return sum;
-}
-void updateLCDStatus(bool carBefore, bool carAfter, bool barrierOpened, bool okRequested, bool BarrierIsOpening, bool BarrierIsClosing) {
-  String line1, line2;
-
-  if (BarrierIsOpening) {
-    line1 = "Access granted";
-    line2 = "Barrier is opening";
-  } else if (carBefore && !barrierOpened && !okRequested) {
-    line1 = "Car detected";
-    line2 = "Press Button";
-  } else if (barrierOpened && carAfter) {
-    line1 = "Car in zone";
-    line2 = "Barrier is opened";
-  } else if (BarrierIsClosing) {
-    line1 = "Car passed";
-    line2 = "Closing barrier";
-  } else if (!carBefore && !carAfter && !barrierOpened) {
-    line1 = "HELLO";
-    line2 = "";
-  } else if (carBefore && barrierOpened) {
-    line1 = "MOVE FORWARD->->->";
-    line2 = "";
+  // Open barrier when permission is granted
+  if (entry.waitingForPermission && entry.hasPermission && entry.carBefore && !entry.barrierOpened) {
+    entry.opening = true;
+    entry.closing = false;
+    entry.waitingForPermission = false;
+    entry.hasPermission = false;
+    Serial.println("ENTRY_BARRIER_OPENING");
+    updateLCD("Access Granted", "Barrier Opening");
   }
 
-  // Only update display if lines have changed
+  // Close barrier when car has passed
+  if (entry.barrierOpened && entry.lastCarAfter && !entry.carAfter) {
+    entry.closing = true;
+    entry.opening = false;
+    Serial.println("ENTRY_BARRIER_CLOSING");
+    updateLCD("Car Passed", "Barrier Closing");
+  }
+
+  // Reset if car leaves without permission
+  if (entry.waitingForPermission && !entry.carBefore && entry.lastCarBefore) {
+    entry.waitingForPermission = false;
+    Serial.println("CAR_LEFT_ENTRY");
+    updateLCD("Ready", "");
+  }
+
+  moveBarrier(entry);
+}
+
+void handleExitBarrier() {
+  updateCarPresence(exitBarrier);
+
+  // Car detected at exit - open automatically
+  if (exitBarrier.carBefore && !exitBarrier.lastCarBefore && !exitBarrier.barrierOpened) {
+    exitBarrier.opening = true;
+    exitBarrier.closing = false;
+    Serial.println("CAR_DETECTED_EXIT");
+    Serial.println("EXIT_BARRIER_OPENING");
+    updateLCD("Car Exiting", "Barrier Opening");
+  }
+
+  // Close barrier when car has passed
+  if (exitBarrier.barrierOpened && exitBarrier.lastCarAfter && !exitBarrier.carAfter) {
+    exitBarrier.closing = true;
+    exitBarrier.opening = false;
+    Serial.println("EXIT_BARRIER_CLOSING");
+    updateLCD("Car Exited", "Barrier Closing");
+  }
+
+  moveBarrier(exitBarrier);
+}
+
+void updateLCD(String line1, String line2) {
+  static String lastLine1 = "";
+  static String lastLine2 = "";
+
   if (line1 != lastLine1 || line2 != lastLine2) {
     lcd.clear();
-    lcd.setCursor(getCenter(line1), 0);
+
+    // Center text on LCD
+    int pos1 = (16 - line1.length()) / 2;
+    int pos2 = (16 - line2.length()) / 2;
+
+    lcd.setCursor(max(0, pos1), 0);
     lcd.print(line1);
-    lcd.setCursor(getCenter(line2), 1);
-    lcd.print(line2);
+
+    if (line2.length() > 0) {
+      lcd.setCursor(max(0, pos2), 1);
+      lcd.print(line2);
+    }
+
     lastLine1 = line1;
     lastLine2 = line2;
   }
 }
 
-void setup() {
-  // put your setup code here, to run once:
+void handleSerialCommands() {
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    command.toLowerCase();
 
+    Serial.print("RECEIVED_COMMAND: ");
+    Serial.println(command);
+
+    if (command == "plate_valid" || command == "open_entry") {
+      if (entry.waitingForPermission) {
+        entry.hasPermission = true;
+        Serial.println("ENTRY_PERMISSION_GRANTED");
+      } else {
+        Serial.println("NO_CAR_WAITING_ENTRY");
+      }
+    }
+    else if (command == "plate_invalid") {
+      if (entry.waitingForPermission) {
+        entry.waitingForPermission = false;
+        Serial.println("ENTRY_PERMISSION_DENIED");
+        updateLCD("Access Denied", "Invalid Plate");
+        delay(2000);
+        updateLCD("Ready", "");
+      }
+    }
+    else if (command == "status") {
+      Serial.println("=== SYSTEM STATUS ===");
+      Serial.print("Entry - Car Before: ");
+      Serial.print(entry.carBefore ? "YES" : "NO");
+      Serial.print(", Car After: ");
+      Serial.print(entry.carAfter ? "YES" : "NO");
+      Serial.print(", Barrier: ");
+      Serial.println(entry.barrierOpened ? "OPEN" : "CLOSED");
+
+      Serial.print("Exit - Car Before: ");
+      Serial.print(exitBarrier.carBefore ? "YES" : "NO");
+      Serial.print(", Car After: ");
+      Serial.print(exitBarrier.carAfter ? "YES" : "NO");
+      Serial.print(", Barrier: ");
+      Serial.println(exitBarrier.barrierOpened ? "OPEN" : "CLOSED");
+      Serial.println("==================");
+    }
+    else if (command == "reset") {
+      // Emergency reset
+      entry.waitingForPermission = false;
+      entry.hasPermission = false;
+      entry.opening = false;
+      entry.closing = false;
+      exitBarrier.opening = false;
+      exitBarrier.closing = false;
+      Serial.println("SYSTEM_RESET");
+      updateLCD("System Reset", "Ready");
+    }
+  }
+}
+
+void sendPeriodicSignals() {
+  // Send periodic status for entry barrier when car is waiting
+  if (entry.waitingForPermission && millis() - lastEntrySignal > SIGNAL_SEND_INTERVAL) {
+    Serial.println("CAR_WAITING_ENTRY");
+    lastEntrySignal = millis();
+  }
+}
+
+void setup() {
   Serial.begin(9600);
 
-  pinMode(PUSHBUTTON_PIN, INPUT);
-  pinMode(RED_LED_PIN, OUTPUT);
-  pinMode(GREEN_LED_PIN, OUTPUT);
-
-  pinMode(trigPin1, OUTPUT);
-  pinMode(echoPin1, INPUT);
-
-
-  pinMode(trigPin2, OUTPUT);
-  pinMode(echoPin2, INPUT);
-
-  barrierServo.attach(SERVO_PIN);
-  barrierServo.write(CLOSED_ANGLE);  // Start closed
-
-
-
-  lcd.begin();
+  // Initialize LCD
+  lcd.begin(16, 2);
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("System Ready");
-  delay(1000);
+  lcd.print("Smart Barrier");
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+
+  // Initialize pins
+  pinMode(ENTRY_TRIG, OUTPUT);
+  pinMode(ENTRY_ECHO, INPUT);
+  pinMode(ENTRY_SAFE_TRIG, OUTPUT);
+  pinMode(ENTRY_SAFE_ECHO, INPUT);
+
+  pinMode(EXIT_TRIG, OUTPUT);
+  pinMode(EXIT_ECHO, INPUT);
+  pinMode(EXIT_SAFE_TRIG, OUTPUT);
+  pinMode(EXIT_SAFE_ECHO, INPUT);
+
+  // Initialize servos
+  entryServo.attach(SERVO_ENTRY_PIN);
+  exitServo.attach(SERVO_EXIT_PIN);
+
+  entryServo.write(CLOSED_ANGLE);
+  exitServo.write(CLOSED_ANGLE);
+
+  delay(2000);
+
+  Serial.println("SYSTEM_READY");
+  Serial.println("Commands: plate_valid, plate_invalid, status, reset");
+
+  updateLCD("System Ready", "");
 }
 
 void loop() {
+  unsigned long now = millis();
 
-
-
-  now = millis();
-
-  if (now - then > ULTRASONIC_DELAY) {
-
-
-
-    Sensor1ReadingValid = ReadUltrasonic(echoPin1, trigPin1);
-    updatePresentCarState(Sensor1ReadingValid, ultrasonicReadingBuffer1, &index1, &carBefore);
-
-
-    Sensor2ReadingValid = ReadUltrasonic(echoPin2, trigPin2);
-    updatePresentCarState(Sensor2ReadingValid, ultrasonicReadingBuffer2, &index2, &carAfter);
-
-
-    mesaj[0] = carBefore;
-    mesaj[2] = carAfter;
-
-
-
-
-    then = now;
+  // Update sensors at regular intervals
+  if (now - lastSensorUpdate >= SENSOR_UPDATE_INTERVAL) {
+    handleEntryBarrier();
+    handleExitBarrier();
+    lastSensorUpdate = now;
   }
 
+  // Handle serial communication
+  handleSerialCommands();
 
-  mesaj[1] = (int)BarrierIsNowOpened;
-   
-   MessageToSend=DecodeMessage(mesaj);
-  Serial.println(MessageToSend);
+  // Send periodic signals
+  sendPeriodicSignals();
 
-
-
-  if (Serial.available()) {
-    String command = Serial.readStringUntil('\n');  // Read until newline
-    command.trim();                                 // Remove any leading/trailing whitespace
-
-    Serial.print("Arduino received: ");
-    Serial.println(command);  // Echo back the received command
-
-    if (command == "o") {
-      OK = !OK;
-    }
-
-    /*
-      else if (command == "Turn LED OFF") 
-      {
-        digitalWrite(LED_BUILTIN, LOW);
-        Serial.println("LED is now OFF");
-      }
-
-      */
-  }
-
-
-
-  if (carBefore == 1 && BarrierIsNowOpened == false) {
-
-    //handleButton();
-    if (OK) {
-      openBarrier();
-      //Serial.println(BarrierIsNowOpened);
-    }
-  }
-
-  if (carAfter_LastValue == 1 && carAfter == 0 && BarrierIsNowOpened == true)
-    closeBarrier();
-
-
-
-
-  carAfter_LastValue = carAfter;
-  updateLCDStatus(carBefore, carAfter, BarrierIsNowOpened, OK, barrierIsOpening, barrierIsClosing);
-  updateBarrier();
-  BarrierLed();
+  // Small delay to prevent overwhelming the system
+  delay(10);
 }
