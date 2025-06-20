@@ -8,7 +8,7 @@ from recognizer import NumberPlateRecognizer
 from validator import RomanianLicensePlateValidator
 
 # Import the ParkingDatabaseManager class from your database.py (or parking_db_app.py) file
-from parking_db_app import ParkingDatabaseManager
+from database import ParkingDatabaseManager
 
 # TODO: think about adding a conf.local file for each platform
 
