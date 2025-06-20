@@ -192,29 +192,29 @@ if __name__ == "__main__":
         db_manager = ParkingDatabaseManager(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 
         print("\n--- Appending a new vehicle ---")
-        db_manager.append_to_database("ABC-123", is_authorized=True)
-        db_manager.append_to_database("XYZ-789", is_authorized=False)
-        db_manager.append_to_database("LMN-456") # Defaults to is_authorized=True
-
-        print("\n--- Trying to append an existing vehicle (should fail) ---")
-        db_manager.append_to_database("ABC-123")
-
-        print("\n--- Verifying vehicles ---")
-        vehicle1 = db_manager.verify_from_database("ABC-123")
-        if vehicle1:
-            print(f"ABC-123 is authorized: {vehicle1['is_authorized']}")
-
-        vehicle2 = db_manager.verify_from_database("XYZ-789")
-        if vehicle2:
-            print(f"XYZ-789 is authorized: {vehicle2['is_authorized']}")
-
-        db_manager.verify_from_database("NON-EXISTENT")
-
-        print("\n--- Deleting a vehicle ---")
-        db_manager.delete_from_database("XYZ-789")
-
-        print("\n--- Verifying deleted vehicle (should not be found) ---")
-        db_manager.verify_from_database("XYZ-789")
-
-        print("\n--- Deleting a non-existent vehicle (should indicate not found) ---")
-        db_manager.delete_from_database("NON-EXISTENT")
+        db_manager.append_to_database("MAI12346", is_authorized=True)
+        # db_manager.append_to_database("XYZ-789", is_authorized=False)
+        # db_manager.append_to_database("LMN-456") # Defaults to is_authorized=True
+        #
+        # print("\n--- Trying to append an existing vehicle (should fail) ---")
+        # db_manager.append_to_database("ABC-123")
+        #
+        # print("\n--- Verifying vehicles ---")
+        # vehicle1 = db_manager.verify_from_database("ABC-123")
+        # if vehicle1:
+        #     print(f"ABC-123 is authorized: {vehicle1['is_authorized']}")
+        #
+        # vehicle2 = db_manager.verify_from_database("XYZ-789")
+        # if vehicle2:
+        #     print(f"XYZ-789 is authorized: {vehicle2['is_authorized']}")
+        #
+        # db_manager.verify_from_database("NON-EXISTENT")
+        #
+        # print("\n--- Deleting a vehicle ---")
+        # db_manager.delete_from_database("XYZ-789")
+        #
+        # print("\n--- Verifying deleted vehicle (should not be found) ---")
+        # db_manager.verify_from_database("XYZ-789")
+        #
+        # print("\n--- Deleting a non-existent vehicle (should indicate not found) ---")
+        # db_manager.delete_from_database("NON-EXISTENT")
